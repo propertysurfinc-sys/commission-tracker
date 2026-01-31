@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        /* Target Setup Section */
+        .target-setup {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .target-setup h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .target-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            background: rgba(255,255,255,0.95);
+        }
+
+        .btn-save-target {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-save-target:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        /* Progress Circle */
+        .progress-circle {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s;
+            transform-origin: 50% 50%;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-percentage {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .progress-label {
+            font-size: 0.9em;
+            color: #718096;
+        }
+
+        /* Stats */
+        .stat {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .stat-label {
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* Quarterly Cards */
+        .quarters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quarter-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .quarter-card h4 {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .quarter-amount {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .quarter-progress {
+            background: rgba(255,255,255,0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .quarter-progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.5s;
+        }
+
+        /* Countdown */
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            text-align: center;
+        }
+
+        .countdown-item {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .countdown-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .countdown-label {
+            color: #718096;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Transaction Form */
+        .transaction-form {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .transaction-form h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid input,
+        .form-grid select {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-grid input:focus,
+        .form-grid select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-add {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Transaction Table */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.3s;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .btn-delete {
+            padding: 6px 12px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .btn-delete:hover {
+            background: #f56565;
+        }
+
+        .btn-export {
+            padding: 12px 30px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-export:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        /* Charts */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        /* Achievement Badges */
+        .badges {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .badge {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .badge.locked {
+            background: #e2e8f0;
+            color: #a0aec0;
+        }
+
+        .badge.unlocked {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .countdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Commission Tracker</h1>
+        <p class="subtitle">Track your real estate commission goals and progress</p>
+
+        <!-- Target Setup -->
+        <div class="target-setup">
+            <h2>📊 Set Your Annual Target</h2>
+            <div class="target-inputs">
+                <div class="input-group">
+                    <label>Annual Commission Target</label>
+                    <input type="number" id="annualTarget" placeholder="e.g., 1000000">
+                </div>
+                <div class="input-group">
+                    <label>Target Deadline</label>
+                    <input type="date" id="targetDeadline">
+                </div>
+                <div class="input-group">
+                    <label>Currency</label>
+                    <select id="currency">
+                        <option value="PHP">PHP (₱)</option>
+                        <option value="USD">USD ($)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-save-target" onclick="saveTarget()">Save Target</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Overall Progress -->
+            <div class="card">
+                <h3>📈 Overall Progress</h3>
+                <div class="progress-circle">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="15" fill="transparent" r="85" cx="100" cy="100"/>
+                        <circle id="progressCircle" class="progress-ring-circle" stroke="#667eea" stroke-width="15" fill="transparent" r="85" cx="100" cy="100"/>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                        <div class="progress-label">Complete</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="currentTotal">₱0</div>
+                    <div class="stat-label">Total Earned</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="remaining">₱0</div>
+                    <div class="stat-label">Remaining to Goal</div>
+                </div>
+                <div class="badges" id="badges"></div>
+            </div>
+
+            <!-- Countdown -->
+            <div class="card">
+                <h3>⏰ Time Remaining</h3>
+                <div class="countdown">
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="monthsLeft">0</div>
+                        <div class="countdown-label">Months</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="weeksLeft">0</div>
+                        <div class="countdown-label">Weeks</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="daysLeft">0</div>
+                        <div class="countdown-label">Days</div>
+                    </div>
+                </div>
+                <div class="stat" style="margin-top: 20px;">
+                    <div class="stat-value" id="avgPerTransaction">₱0</div>
+                    <div class="stat-label">Average per Transaction</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="projectedDate">-</div>
+                    <div class="stat-label">Projected Completion</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quarterly Breakdown -->
+        <h2 style="margin-bottom: 20px; color: #2d3748;">📅 Quarterly Performance</h2>
+        <div class="quarters" id="quarters"></div>
+
+        <!-- Transaction Form -->
+        <div class="transaction-form">
+            <h2>➕ Add New Transaction</h2>
+            <div class="form-grid">
+                <input type="number" id="commissionAmount" placeholder="Commission Amount">
+                <input type="text" id="source" placeholder="Source/Referral">
+                <select id="propertyType">
+                    <option value="">Select Property Type</option>
+                    <option value="Residential Lot">Residential Lot</option>
+                    <option value="House & Lot">House & Lot</option>
+                    <option value="Condominium">Condominium</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Townhouse">Townhouse</option>
+                </select>
+                <input type="text" id="village" placeholder="Village/Development">
+                <input type="date" id="transactionDate">
+            </div>
+            <button class="btn-add" onclick="addTransaction()">Add Transaction</button>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>📊 Commission by Source</h3>
+                <canvas id="sourceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏘️ Commission by Property Type</h3>
+                <canvas id="propertyChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏡 Top Villages</h3>
+                <canvas id="villageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <button class="btn-export" onclick="exportToCSV()">📥 Export to CSV</button>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Commission</th>
+                        <th>Source</th>
+                        <th>Property Type</th>
+                        <th>Village</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTable">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>No transactions yet. Add your first transaction above!</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let targetData = JSON.parse(localStorage.getItem('targetData')) || {
+            annualTarget: 0,
+            deadline: '',
+            currency: 'PHP'
+        };
+
+        let sourceChart, propertyChart, villageChart;
+
+        // Initialize
+        window.onload = function() {
+            loadTargetData();
+            updateDashboard();
+            renderTransactions();
+            initCharts();
+        };
+
+        function saveTarget() {
+            targetData.annualTarget = parseFloat(document.getElementById('annualTarget').value) || 0;
+            targetData.deadline = document.getElementById('targetDeadline').value;
+            targetData.currency = document.getElementById('currency').value;
+            localStorage.setItem('targetData', JSON.stringify(targetData));
+            updateDashboard();
+            alert('Target saved successfully! 🎯');
+        }
+
+        function loadTargetData() {
+            document.getElementById('annualTarget').value = targetData.annualTarget || '';
+            document.getElementById('targetDeadline').value = targetData.deadline || '';
+            document.getElementById('currency').value = targetData.currency || 'PHP';
+        }
+
+        function addTransaction() {
+            const amount = parseFloat(document.getElementById('commissionAmount').value);
+            const source = document.getElementById('source').value;
+            const propertyType = document.getElementById('propertyType').value;
+            const village = document.getElementById('village').value;
+            const date = document.getElementById('transactionDate').value;
+
+            if (!amount || !source || !propertyType || !village || !date) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const transaction = {
+                id: Date.now(),
+                amount,
+                source,
+                propertyType,
+                village,
+                date
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Clear form
+            document.getElementById('commissionAmount').value = '';
+            document.getElementById('source').value = '';
+            document.getElementById('propertyType').value = '';
+            document.getElementById('village').value = '';
+            document.getElementById('transactionDate').value = '';
+
+            updateDashboard();
+            renderTransactions();
+            updateCharts();
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Are you sure you want to delete this transaction?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                updateDashboard();
+                renderTransactions();
+                updateCharts();
+            }
+        }
+
+        function updateDashboard() {
+            const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+            const target = targetData.annualTarget || 0;
+            const percentage = target > 0 ? Math.min((total / target) * 100, 100) : 0;
+            const remaining = Math.max(target - total, 0);
+            
+            const currencySymbol = targetData.currency === 'PHP' ? '₱' : '$';
+
+            // Update progress circle
+            const circle = document.getElementById('progressCircle');
+            const radius = 85;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+
+            document.getElementById('progressPercentage').textContent = percentage.toFixed(1) + '%';
+            document.getElementById('currentTotal').textContent = currencySymbol + total.toLocaleString();
+            document.getElementById('remaining').textContent = currencySymbol + remaining.toLocaleString();
+
+            // Update countdown
+            if (targetData.deadline) {
+                const deadline = new Date(targetData.deadline);
+                const now = new Date();
+                const diff = deadline - now;
+
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const weeks = Math.floor(days / 7);
+                    const months = Math.floor(days / 30);
+
+                    document.getElementById('monthsLeft').textContent = months;
+                    document.getElementById('weeksLeft').textContent = weeks;
+                    document.getElementById('daysLeft').textContent = days;
+                } else {
+                    document.getElementById('monthsLeft').textContent = '0';
+                    document.getElementById('weeksLeft').textContent = '0';
+                    document.getElementById('daysLeft').textContent = '0';
+                }
+            }
+
+            // Average per transaction
+            const avgPerTransaction = transactions.length > 0 ? total / transactions.length : 0;
+            document.getElementById('avgPerTransaction').textContent = currencySymbol + avgPerTransaction.toLocaleString(undefined, {maximumFractionDigits: 0});
+
+            // Projected completion
+            if (transactions.length > 0 && total < target) {
+                const daysWithTransactions = new Set(transactions.map(t => t.date)).size;
+                const avgPerDay = total / daysWithTransactions;
+                const daysNeeded = (target - total) / avgPerDay;
+                const projectedDate = new Date();
+                projectedDate.setDate(projectedDate.getDate() + Math.ceil(daysNeeded));
+                document.getElementById('projectedDate').textContent = projectedDate.toLocaleDateString();
+            } else if (total >= target) {
+                document.getElementById('projectedDate').textContent = 'Target Reached! 🎉';
+            } else {
+                document.getElementById('projectedDate').textContent = '-';
+            }
+
+            // Update badges
+            updateBadges(percentage);
+
+            // Update quarterly breakdown
+            updateQuarters();
+        }
+
+        function updateBadges(percentage) {
+            const badgesContainer = document.getElementById('badges');
+            const milestones = [
+                { level: 25, label: '🥉 Bronze' },
+                { level: 50, label: '🥈 Silver' },
+                { level: 75, label: '🥇 Gold' },
+                { level: 100, label: '💎 Diamond' }
+            ];
+
+            badgesContainer.innerHTML = milestones.map(m => {
+                const unlocked = percentage >= m.level;
+                return `<div class="badge ${unlocked ? 'unlocked' : 'locked'}">${m.label}</div>`;
+            }).join('');
+        }
+
+        function updateQuarters() {
+            const quartersContainer = document.getElementById('quarters');
+            const currentYear = new Date().getFullYear();
+            const quarters = [
+                { name: 'Q1', start: new Date(currentYear, 0, 1), end: new Date(currentYear, 2, 31) },
+                { name: 'Q2', start: new Date(currentYear, 3, 1), end: new Date(currentYear, 5, 30) },
+                { name: 'Q3', start: new Date(currentYear, 6, 1), end: new Date(currentYear, 8, 30) },
+                { name: 'Q4', start: new Date(currentYear, 9, 1), end: new Date(currentYear, 11, 31) }
+            ];
+
+            const currencySymbol = targetData.currency === 'PHP' ? '₱' : '$';
+            const target = targetData.annualTarget || 0;
+
+            quartersContainer.innerHTML = quarters.map(q => {
+                const quarterTotal = transactions
+                    .filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate >= q.start && tDate <= q.end;
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const percentage = target > 0 ? (quarterTotal / target) * 100 : 0;
+
+                return `
+                    <div class="quarter-card">
+                        <h4>${q.name} ${currentYear}</h4>
+                        <div class="quarter-amount">${currencySymbol}${quarterTotal.toLocaleString()}</div>
+                        <div>${percentage.toFixed(1)}% of annual target</div>
+                        <div class="quarter-progress">
+                            <div class="quarter-progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('transactionsTable');
+            const currencySymbol = targetData.currency === 'PHP' ? '₱' : '$';
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>No transactions yet. Add your first transaction above!</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = transactions
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map(t => `
+                    <tr>
+                        <td>${new Date(t.date).toLocaleDateString()}</td>
+                        <td>${currencySymbol}${t.amount.toLocaleString()}</td>
+                        <td>${t.source}</td>
+                        <td>${t.propertyType}</td>
+                        <td>${t.village}</td>
+                        <td><button class="btn-delete" onclick="deleteTransaction(${t.id})">Delete</button></td>
+                    </tr>
+                `).join('');
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('sourceChart').getContext('2d');
+            const ctx2 = document.getElementById('propertyChart').getContext('2d');
+            const ctx3 = document.getElementById('villageChart').getContext('2d');
+
+            sourceChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                options: { responsive: true, maintainAspectRatio: true }
+            });
+
+            propertyChart = new Chart(ctx2, {
+                type: 'pie',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                options: { responsive: true, maintainAspectRatio: true }
+            });
+
+            villageChart = new Chart(ctx3, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Commission', data: [], backgroundColor: '#667eea' }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            if (!sourceChart) return;
+
+            const colors = ['#667eea', '#764ba2', '#f6ad55', '#ed8936', '#48bb78', '#38a169', '#4299e1', '#3182ce'];
+
+            // Source breakdown
+            const sourceData = {};
+            transactions.forEach(t => {
+                sourceData[t.source] = (sourceData[t.source] || 0) + t.amount;
+            });
+
+            sourceChart.data.labels = Object.keys(sourceData);
+            sourceChart.data.datasets[0].data = Object.values(sourceData);
+            sourceChart.data.datasets[0].backgroundColor = colors;
+            sourceChart.update();
+
+            // Property type breakdown
+            const propertyData = {};
+            transactions.forEach(t => {
+                propertyData[t.propertyType] = (propertyData[t.propertyType] || 0) + t.amount;
+            });
+
+            propertyChart.data.labels = Object.keys(propertyData);
+            propertyChart.data.datasets[0].data = Object.values(propertyData);
+            propertyChart.data.datasets[0].backgroundColor = colors;
+            propertyChart.update();
+
+            // Village breakdown (top 5)
+            const villageData = {};
+            transactions.forEach(t => {
+                villageData[t.village] = (villageData[t.village] || 0) + t.amount;
+            });
+
+            const topVillages = Object.entries(villageData)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            villageChart.data.labels = topVillages.map(v => v[0]);
+            villageChart.data.datasets[0].data = topVillages.map(v => v[1]);
+            villageChart.update();
+        }
+
+        function exportToCSV() {
+            if (transactions.length === 0) {
+                alert('No transactions to export');
+                return;
+            }
+
+            const headers = ['Date', 'Commission', 'Source', 'Property Type', 'Village'];
+            const rows = transactions.map(t => [
+                t.date,
+                t.amount,
+                t.source,
+                t.propertyType,
+                t.village
+            ]);
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `commission-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
