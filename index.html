@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commission Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -40,7 +39,7 @@
             font-size: 1.1em;
         }
 
-        /* Target Setup Section */
+        /* Target Setup */
         .target-setup {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 25px;
@@ -71,7 +70,8 @@
             font-size: 0.9em;
         }
 
-        .input-group input {
+        .input-group input,
+        .input-group select {
             padding: 12px;
             border: none;
             border-radius: 8px;
@@ -171,10 +171,36 @@
             margin-top: 5px;
         }
 
+        /* Countdown */
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            text-align: center;
+        }
+
+        .countdown-item {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .countdown-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .countdown-label {
+            color: #718096;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
         /* Quarterly Cards */
         .quarters {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
         }
@@ -212,30 +238,10 @@
             transition: width 0.5s;
         }
 
-        /* Countdown */
-        .countdown {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            text-align: center;
-        }
-
-        .countdown-item {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 12px;
-        }
-
-        .countdown-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .countdown-label {
-            color: #718096;
-            margin-top: 5px;
+        .quarter-avg {
+            margin-top: 10px;
             font-size: 0.9em;
+            opacity: 0.9;
         }
 
         /* Transaction Form */
@@ -253,13 +259,12 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 2fr 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
         }
 
-        .form-grid input,
-        .form-grid select {
+        .form-grid input {
             padding: 12px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
@@ -267,8 +272,7 @@
             transition: border-color 0.3s;
         }
 
-        .form-grid input:focus,
-        .form-grid select:focus {
+        .form-grid input:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -355,56 +359,6 @@
             transform: translateY(-2px);
         }
 
-        /* Charts */
-        .charts-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .chart-card {
-            background: #f7fafc;
-            padding: 25px;
-            border-radius: 15px;
-        }
-
-        .chart-card h3 {
-            margin-bottom: 20px;
-            color: #2d3748;
-        }
-
-        /* Achievement Badges */
-        .badges {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .badge {
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-
-        .badge.locked {
-            background: #e2e8f0;
-            color: #a0aec0;
-        }
-
-        .badge.unlocked {
-            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -426,6 +380,14 @@
             }
 
             .countdown {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quarters {
                 grid-template-columns: 1fr;
             }
         }
@@ -434,14 +396,14 @@
 <body>
     <div class="container">
         <h1>🏆 Commission Tracker</h1>
-        <p class="subtitle">Track your real estate commission goals and progress</p>
+        <p class="subtitle">Track your commission goals and progress</p>
 
         <!-- Target Setup -->
         <div class="target-setup">
             <h2>📊 Set Your Annual Target</h2>
             <div class="target-inputs">
                 <div class="input-group">
-                    <label>Annual Commission Target</label>
+                    <label>Total Target Amount</label>
                     <input type="number" id="annualTarget" placeholder="e.g., 1000000">
                 </div>
                 <div class="input-group">
@@ -463,7 +425,7 @@
         <div class="dashboard">
             <!-- Overall Progress -->
             <div class="card">
-                <h3>📈 Overall Progress</h3>
+                <h3>📈 Total Progress</h3>
                 <div class="progress-circle">
                     <svg class="progress-ring" width="200" height="200">
                         <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="15" fill="transparent" r="85" cx="100" cy="100"/>
@@ -482,7 +444,6 @@
                     <div class="stat-value" id="remaining">₱0</div>
                     <div class="stat-label">Remaining to Goal</div>
                 </div>
-                <div class="badges" id="badges"></div>
             </div>
 
             <!-- Countdown -->
@@ -501,56 +462,27 @@
                         <div class="countdown-value" id="daysLeft">0</div>
                         <div class="countdown-label">Days</div>
                     </div>
-                </div>
-                <div class="stat" style="margin-top: 20px;">
-                    <div class="stat-value" id="avgPerTransaction">₱0</div>
-                    <div class="stat-label">Average per Transaction</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="projectedDate">-</div>
-                    <div class="stat-label">Projected Completion</div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="secondsLeft">0</div>
+                        <div class="countdown-label">Seconds</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Quarterly Breakdown -->
-        <h2 style="margin-bottom: 20px; color: #2d3748;">📅 Quarterly Performance</h2>
+        <h2 style="margin-bottom: 20px; color: #2d3748;">📅 Quarterly Targets</h2>
         <div class="quarters" id="quarters"></div>
 
         <!-- Transaction Form -->
         <div class="transaction-form">
             <h2>➕ Add New Transaction</h2>
             <div class="form-grid">
-                <input type="number" id="commissionAmount" placeholder="Commission Amount">
-                <input type="text" id="source" placeholder="Source/Referral">
-                <select id="propertyType">
-                    <option value="">Select Property Type</option>
-                    <option value="Residential Lot">Residential Lot</option>
-                    <option value="House & Lot">House & Lot</option>
-                    <option value="Condominium">Condominium</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Townhouse">Townhouse</option>
-                </select>
-                <input type="text" id="village" placeholder="Village/Development">
+                <input type="text" id="transactionName" placeholder="Transaction Name">
+                <input type="number" id="commissionAmount" placeholder="Amount">
                 <input type="date" id="transactionDate">
             </div>
             <button class="btn-add" onclick="addTransaction()">Add Transaction</button>
-        </div>
-
-        <!-- Charts -->
-        <div class="charts-section">
-            <div class="chart-card">
-                <h3>📊 Commission by Source</h3>
-                <canvas id="sourceChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>🏘️ Commission by Property Type</h3>
-                <canvas id="propertyChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>🏡 Top Villages</h3>
-                <canvas id="villageChart"></canvas>
-            </div>
         </div>
 
         <!-- Transactions Table -->
@@ -560,16 +492,14 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Commission</th>
-                        <th>Source</th>
-                        <th>Property Type</th>
-                        <th>Village</th>
+                        <th>Transaction Name</th>
+                        <th>Amount</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="transactionsTable">
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="4" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <div>No transactions yet. Add your first transaction above!</div>
                         </td>
@@ -587,14 +517,14 @@
             currency: 'PHP'
         };
 
-        let sourceChart, propertyChart, villageChart;
+        let countdownInterval;
 
         // Initialize
         window.onload = function() {
             loadTargetData();
             updateDashboard();
             renderTransactions();
-            initCharts();
+            startCountdown();
         };
 
         function saveTarget() {
@@ -613,23 +543,19 @@
         }
 
         function addTransaction() {
+            const name = document.getElementById('transactionName').value;
             const amount = parseFloat(document.getElementById('commissionAmount').value);
-            const source = document.getElementById('source').value;
-            const propertyType = document.getElementById('propertyType').value;
-            const village = document.getElementById('village').value;
             const date = document.getElementById('transactionDate').value;
 
-            if (!amount || !source || !propertyType || !village || !date) {
+            if (!name || !amount || !date) {
                 alert('Please fill in all fields');
                 return;
             }
 
             const transaction = {
                 id: Date.now(),
+                name,
                 amount,
-                source,
-                propertyType,
-                village,
                 date
             };
 
@@ -637,15 +563,12 @@
             localStorage.setItem('transactions', JSON.stringify(transactions));
 
             // Clear form
+            document.getElementById('transactionName').value = '';
             document.getElementById('commissionAmount').value = '';
-            document.getElementById('source').value = '';
-            document.getElementById('propertyType').value = '';
-            document.getElementById('village').value = '';
             document.getElementById('transactionDate').value = '';
 
             updateDashboard();
             renderTransactions();
-            updateCharts();
         }
 
         function deleteTransaction(id) {
@@ -654,7 +577,6 @@
                 localStorage.setItem('transactions', JSON.stringify(transactions));
                 updateDashboard();
                 renderTransactions();
-                updateCharts();
             }
         }
 
@@ -678,65 +600,44 @@
             document.getElementById('currentTotal').textContent = currencySymbol + total.toLocaleString();
             document.getElementById('remaining').textContent = currencySymbol + remaining.toLocaleString();
 
-            // Update countdown
-            if (targetData.deadline) {
-                const deadline = new Date(targetData.deadline);
-                const now = new Date();
-                const diff = deadline - now;
-
-                if (diff > 0) {
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const weeks = Math.floor(days / 7);
-                    const months = Math.floor(days / 30);
-
-                    document.getElementById('monthsLeft').textContent = months;
-                    document.getElementById('weeksLeft').textContent = weeks;
-                    document.getElementById('daysLeft').textContent = days;
-                } else {
-                    document.getElementById('monthsLeft').textContent = '0';
-                    document.getElementById('weeksLeft').textContent = '0';
-                    document.getElementById('daysLeft').textContent = '0';
-                }
-            }
-
-            // Average per transaction
-            const avgPerTransaction = transactions.length > 0 ? total / transactions.length : 0;
-            document.getElementById('avgPerTransaction').textContent = currencySymbol + avgPerTransaction.toLocaleString(undefined, {maximumFractionDigits: 0});
-
-            // Projected completion
-            if (transactions.length > 0 && total < target) {
-                const daysWithTransactions = new Set(transactions.map(t => t.date)).size;
-                const avgPerDay = total / daysWithTransactions;
-                const daysNeeded = (target - total) / avgPerDay;
-                const projectedDate = new Date();
-                projectedDate.setDate(projectedDate.getDate() + Math.ceil(daysNeeded));
-                document.getElementById('projectedDate').textContent = projectedDate.toLocaleDateString();
-            } else if (total >= target) {
-                document.getElementById('projectedDate').textContent = 'Target Reached! 🎉';
-            } else {
-                document.getElementById('projectedDate').textContent = '-';
-            }
-
-            // Update badges
-            updateBadges(percentage);
-
             // Update quarterly breakdown
             updateQuarters();
         }
 
-        function updateBadges(percentage) {
-            const badgesContainer = document.getElementById('badges');
-            const milestones = [
-                { level: 25, label: '🥉 Bronze' },
-                { level: 50, label: '🥈 Silver' },
-                { level: 75, label: '🥇 Gold' },
-                { level: 100, label: '💎 Diamond' }
-            ];
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
 
-            badgesContainer.innerHTML = milestones.map(m => {
-                const unlocked = percentage >= m.level;
-                return `<div class="badge ${unlocked ? 'unlocked' : 'locked'}">${m.label}</div>`;
-            }).join('');
+            countdownInterval = setInterval(() => {
+                if (targetData.deadline) {
+                    const deadline = new Date(targetData.deadline);
+                    deadline.setHours(23, 59, 59, 999); // End of day
+                    const now = new Date();
+                    const diff = deadline - now;
+
+                    if (diff > 0) {
+                        const seconds = Math.floor(diff / 1000);
+                        const minutes = Math.floor(seconds / 60);
+                        const hours = Math.floor(minutes / 60);
+                        const days = Math.floor(hours / 24);
+                        const weeks = Math.floor(days / 7);
+                        const months = Math.floor(days / 30);
+
+                        const remainingSeconds = seconds % 60;
+
+                        document.getElementById('monthsLeft').textContent = months;
+                        document.getElementById('weeksLeft').textContent = weeks;
+                        document.getElementById('daysLeft').textContent = days;
+                        document.getElementById('secondsLeft').textContent = remainingSeconds;
+                    } else {
+                        document.getElementById('monthsLeft').textContent = '0';
+                        document.getElementById('weeksLeft').textContent = '0';
+                        document.getElementById('daysLeft').textContent = '0';
+                        document.getElementById('secondsLeft').textContent = '0';
+                    }
+                }
+            }, 1000);
         }
 
         function updateQuarters() {
@@ -751,24 +652,26 @@
 
             const currencySymbol = targetData.currency === 'PHP' ? '₱' : '$';
             const target = targetData.annualTarget || 0;
+            const quarterTarget = target / 4;
 
             quartersContainer.innerHTML = quarters.map(q => {
-                const quarterTotal = transactions
-                    .filter(t => {
-                        const tDate = new Date(t.date);
-                        return tDate >= q.start && tDate <= q.end;
-                    })
-                    .reduce((sum, t) => sum + t.amount, 0);
+                const quarterTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    return tDate >= q.start && tDate <= q.end;
+                });
 
-                const percentage = target > 0 ? (quarterTotal / target) * 100 : 0;
+                const quarterTotal = quarterTransactions.reduce((sum, t) => sum + t.amount, 0);
+                const quarterAvg = quarterTransactions.length > 0 ? quarterTotal / quarterTransactions.length : 0;
+                const percentage = quarterTarget > 0 ? Math.min((quarterTotal / quarterTarget) * 100, 100) : 0;
 
                 return `
                     <div class="quarter-card">
                         <h4>${q.name} ${currentYear}</h4>
                         <div class="quarter-amount">${currencySymbol}${quarterTotal.toLocaleString()}</div>
-                        <div>${percentage.toFixed(1)}% of annual target</div>
+                        <div>${percentage.toFixed(1)}% of quarter target</div>
+                        <div class="quarter-avg">Avg per sale: ${currencySymbol}${quarterAvg.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
                         <div class="quarter-progress">
-                            <div class="quarter-progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                            <div class="quarter-progress-fill" style="width: ${percentage}%"></div>
                         </div>
                     </div>
                 `;
@@ -782,7 +685,7 @@
             if (transactions.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="4" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <div>No transactions yet. Add your first transaction above!</div>
                         </td>
@@ -796,85 +699,11 @@
                 .map(t => `
                     <tr>
                         <td>${new Date(t.date).toLocaleDateString()}</td>
+                        <td>${t.name}</td>
                         <td>${currencySymbol}${t.amount.toLocaleString()}</td>
-                        <td>${t.source}</td>
-                        <td>${t.propertyType}</td>
-                        <td>${t.village}</td>
                         <td><button class="btn-delete" onclick="deleteTransaction(${t.id})">Delete</button></td>
                     </tr>
                 `).join('');
-        }
-
-        function initCharts() {
-            const ctx1 = document.getElementById('sourceChart').getContext('2d');
-            const ctx2 = document.getElementById('propertyChart').getContext('2d');
-            const ctx3 = document.getElementById('villageChart').getContext('2d');
-
-            sourceChart = new Chart(ctx1, {
-                type: 'doughnut',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-
-            propertyChart = new Chart(ctx2, {
-                type: 'pie',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-
-            villageChart = new Chart(ctx3, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Commission', data: [], backgroundColor: '#667eea' }] },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: true,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-
-            updateCharts();
-        }
-
-        function updateCharts() {
-            if (!sourceChart) return;
-
-            const colors = ['#667eea', '#764ba2', '#f6ad55', '#ed8936', '#48bb78', '#38a169', '#4299e1', '#3182ce'];
-
-            // Source breakdown
-            const sourceData = {};
-            transactions.forEach(t => {
-                sourceData[t.source] = (sourceData[t.source] || 0) + t.amount;
-            });
-
-            sourceChart.data.labels = Object.keys(sourceData);
-            sourceChart.data.datasets[0].data = Object.values(sourceData);
-            sourceChart.data.datasets[0].backgroundColor = colors;
-            sourceChart.update();
-
-            // Property type breakdown
-            const propertyData = {};
-            transactions.forEach(t => {
-                propertyData[t.propertyType] = (propertyData[t.propertyType] || 0) + t.amount;
-            });
-
-            propertyChart.data.labels = Object.keys(propertyData);
-            propertyChart.data.datasets[0].data = Object.values(propertyData);
-            propertyChart.data.datasets[0].backgroundColor = colors;
-            propertyChart.update();
-
-            // Village breakdown (top 5)
-            const villageData = {};
-            transactions.forEach(t => {
-                villageData[t.village] = (villageData[t.village] || 0) + t.amount;
-            });
-
-            const topVillages = Object.entries(villageData)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-
-            villageChart.data.labels = topVillages.map(v => v[0]);
-            villageChart.data.datasets[0].data = topVillages.map(v => v[1]);
-            villageChart.update();
         }
 
         function exportToCSV() {
@@ -883,13 +712,11 @@
                 return;
             }
 
-            const headers = ['Date', 'Commission', 'Source', 'Property Type', 'Village'];
+            const headers = ['Date', 'Transaction Name', 'Amount'];
             const rows = transactions.map(t => [
                 t.date,
-                t.amount,
-                t.source,
-                t.propertyType,
-                t.village
+                t.name,
+                t.amount
             ]);
 
             let csvContent = headers.join(',') + '\n';
