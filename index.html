@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commission Tracker</title>
+    <title>Commission Tracker - Cloud Synced</title>
     <style>
         * {
             margin: 0;
@@ -37,6 +37,41 @@
             color: #718096;
             margin-bottom: 30px;
             font-size: 1.1em;
+        }
+
+        /* Setup Instructions */
+        .setup-notice {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .setup-notice h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .setup-notice ol {
+            margin-left: 20px;
+            color: #78350f;
+        }
+
+        .setup-notice li {
+            margin: 8px 0;
+        }
+
+        .setup-notice code {
+            background: #fde68a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .setup-notice a {
+            color: #1d4ed8;
+            text-decoration: underline;
         }
 
         /* Target Setup */
@@ -294,6 +329,11 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
+        .btn-add:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Transaction Table */
         .table-container {
             overflow-x: auto;
@@ -341,6 +381,11 @@
             background: #f56565;
         }
 
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-export {
             padding: 12px 30px;
             background: #48bb78;
@@ -370,6 +415,62 @@
             margin-bottom: 20px;
         }
 
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .sync-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #48bb78;
+        }
+
+        .sync-indicator.syncing {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        .sync-indicator.error {
+            background: #f56565;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -394,9 +495,95 @@
     </style>
 </head>
 <body>
+    <!-- Sync Status Indicator -->
+    <div class="sync-status">
+        <div class="sync-indicator" id="syncIndicator"></div>
+        <span id="syncText">Connected</span>
+    </div>
+
     <div class="container">
         <h1>🏆 Commission Tracker</h1>
-        <p class="subtitle">Track your commission goals and progress</p>
+        <p class="subtitle">Cloud-synced across all devices</p>
+
+        <!-- Setup Instructions -->
+        <div class="setup-notice" id="setupNotice">
+            <h3>⚙️ One-Time Setup Required</h3>
+            <ol>
+                <li>Open this Google Sheet template: <a href="https://docs.google.com/spreadsheets/d/1234567890/copy" target="_blank">Click here to copy template</a></li>
+                <li>Click "Make a copy" to save it to your Google Drive</li>
+                <li>In your new sheet, go to <strong>Extensions → Apps Script</strong></li>
+                <li>Delete any existing code and paste the script below</li>
+                <li>Click <strong>Deploy → New deployment → Select type: Web app</strong></li>
+                <li>Set "Execute as: Me" and "Who has access: Anyone"</li>
+                <li>Click Deploy and copy the Web App URL</li>
+                <li>Paste the URL in the field below and click Connect</li>
+            </ol>
+            <textarea readonly style="width: 100%; height: 150px; margin-top: 10px; padding: 10px; font-family: monospace; font-size: 0.85em; border-radius: 4px; border: 1px solid #d1d5db;">
+function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
+  const targetSheet = sheet.getSheetByName('Target') || sheet.insertSheet('Target');
+  const transactionsSheet = sheet.getSheetByName('Transactions') || sheet.insertSheet('Transactions');
+  
+  if (e.parameter.action === 'getTarget') {
+    const data = targetSheet.getRange('A2:C2').getValues()[0];
+    return ContentService.createTextOutput(JSON.stringify({
+      annualTarget: data[0] || 0,
+      deadline: data[1] || '',
+      currency: data[2] || 'PHP'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (e.parameter.action === 'getTransactions') {
+    const data = transactionsSheet.getDataRange().getValues();
+    const transactions = data.slice(1).map(row => ({
+      id: row[0],
+      name: row[1],
+      amount: row[2],
+      date: row[3]
+    }));
+    return ContentService.createTextOutput(JSON.stringify(transactions)).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
+  const data = JSON.parse(e.postData.contents);
+  
+  if (data.action === 'saveTarget') {
+    const targetSheet = sheet.getSheetByName('Target') || sheet.insertSheet('Target');
+    targetSheet.getRange('A1:C1').setValues([['Annual Target', 'Deadline', 'Currency']]);
+    targetSheet.getRange('A2:C2').setValues([[data.annualTarget, data.deadline, data.currency]]);
+    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (data.action === 'addTransaction') {
+    const transactionsSheet = sheet.getSheetByName('Transactions') || sheet.insertSheet('Transactions');
+    if (transactionsSheet.getLastRow() === 0) {
+      transactionsSheet.getRange('A1:D1').setValues([['ID', 'Name', 'Amount', 'Date']]);
+    }
+    transactionsSheet.appendRow([data.id, data.name, data.amount, data.date]);
+    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (data.action === 'deleteTransaction') {
+    const transactionsSheet = sheet.getSheetByName('Transactions');
+    const dataRange = transactionsSheet.getDataRange();
+    const values = dataRange.getValues();
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] == data.id) {
+        transactionsSheet.deleteRow(i + 1);
+        break;
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+            </textarea>
+            <div style="margin-top: 15px;">
+                <input type="text" id="webAppUrl" placeholder="Paste your Web App URL here" style="width: 70%; padding: 10px; border-radius: 4px; border: 1px solid #d1d5db;">
+                <button onclick="connectToSheet()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Connect</button>
+            </div>
+        </div>
 
         <!-- Target Setup -->
         <div class="target-setup">
@@ -482,7 +669,7 @@
                 <input type="number" id="commissionAmount" placeholder="Amount">
                 <input type="date" id="transactionDate">
             </div>
-            <button class="btn-add" onclick="addTransaction()">Add Transaction</button>
+            <button class="btn-add" id="addBtn" onclick="addTransaction()">Add Transaction</button>
         </div>
 
         <!-- Transactions Table -->
@@ -499,9 +686,9 @@
                 </thead>
                 <tbody id="transactionsTable">
                     <tr>
-                        <td colspan="4" class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <div>No transactions yet. Add your first transaction above!</div>
+                        <td colspan="4" class="loading">
+                            <div class="spinner"></div>
+                            <div>Loading data...</div>
                         </td>
                     </tr>
                 </tbody>
@@ -510,30 +697,91 @@
     </div>
 
     <script>
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-        let targetData = JSON.parse(localStorage.getItem('targetData')) || {
+        let transactions = [];
+        let targetData = {
             annualTarget: 0,
             deadline: '',
             currency: 'PHP'
         };
-
+        let webAppUrl = localStorage.getItem('webAppUrl') || '';
         let countdownInterval;
 
         // Initialize
         window.onload = function() {
-            loadTargetData();
-            updateDashboard();
-            renderTransactions();
-            startCountdown();
+            if (webAppUrl) {
+                document.getElementById('setupNotice').style.display = 'none';
+                loadData();
+                startCountdown();
+            }
         };
 
-        function saveTarget() {
-            targetData.annualTarget = parseFloat(document.getElementById('annualTarget').value) || 0;
-            targetData.deadline = document.getElementById('targetDeadline').value;
-            targetData.currency = document.getElementById('currency').value;
-            localStorage.setItem('targetData', JSON.stringify(targetData));
-            updateDashboard();
-            alert('Target saved successfully! 🎯');
+        function connectToSheet() {
+            const url = document.getElementById('webAppUrl').value.trim();
+            if (!url) {
+                alert('Please paste your Web App URL');
+                return;
+            }
+            localStorage.setItem('webAppUrl', url);
+            webAppUrl = url;
+            document.getElementById('setupNotice').style.display = 'none';
+            loadData();
+            startCountdown();
+        }
+
+        function updateSyncStatus(status, text) {
+            const indicator = document.getElementById('syncIndicator');
+            const statusText = document.getElementById('syncText');
+            indicator.className = 'sync-indicator ' + status;
+            statusText.textContent = text;
+        }
+
+        async function loadData() {
+            try {
+                updateSyncStatus('syncing', 'Loading...');
+                
+                // Load target
+                const targetResponse = await fetch(`${webAppUrl}?action=getTarget`);
+                targetData = await targetResponse.json();
+                loadTargetData();
+                
+                // Load transactions
+                const transResponse = await fetch(`${webAppUrl}?action=getTransactions`);
+                transactions = await transResponse.json();
+                
+                updateDashboard();
+                renderTransactions();
+                updateSyncStatus('', 'Synced');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                updateSyncStatus('error', 'Connection Error');
+            }
+        }
+
+        async function saveTarget() {
+            try {
+                updateSyncStatus('syncing', 'Saving...');
+                
+                targetData.annualTarget = parseFloat(document.getElementById('annualTarget').value) || 0;
+                targetData.deadline = document.getElementById('targetDeadline').value;
+                targetData.currency = document.getElementById('currency').value;
+                
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveTarget',
+                        ...targetData
+                    })
+                });
+                
+                await response.json();
+                updateDashboard();
+                updateSyncStatus('', 'Synced');
+                alert('Target saved successfully! 🎯');
+            } catch (error) {
+                console.error('Error saving target:', error);
+                updateSyncStatus('error', 'Save Failed');
+                alert('Failed to save target. Please check your connection.');
+            }
         }
 
         function loadTargetData() {
@@ -542,7 +790,7 @@
             document.getElementById('currency').value = targetData.currency || 'PHP';
         }
 
-        function addTransaction() {
+        async function addTransaction() {
             const name = document.getElementById('transactionName').value;
             const amount = parseFloat(document.getElementById('commissionAmount').value);
             const date = document.getElementById('transactionDate').value;
@@ -552,36 +800,70 @@
                 return;
             }
 
-            const transaction = {
-                id: Date.now(),
-                name,
-                amount,
-                date
-            };
+            try {
+                updateSyncStatus('syncing', 'Adding...');
+                document.getElementById('addBtn').disabled = true;
 
-            transactions.push(transaction);
-            localStorage.setItem('transactions', JSON.stringify(transactions));
+                const transaction = {
+                    id: Date.now(),
+                    name,
+                    amount,
+                    date
+                };
 
-            // Clear form
-            document.getElementById('transactionName').value = '';
-            document.getElementById('commissionAmount').value = '';
-            document.getElementById('transactionDate').value = '';
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addTransaction',
+                        ...transaction
+                    })
+                });
 
-            updateDashboard();
-            renderTransactions();
+                await response.json();
+
+                // Clear form
+                document.getElementById('transactionName').value = '';
+                document.getElementById('commissionAmount').value = '';
+                document.getElementById('transactionDate').value = '';
+
+                // Reload data
+                await loadData();
+                updateSyncStatus('', 'Synced');
+            } catch (error) {
+                console.error('Error adding transaction:', error);
+                updateSyncStatus('error', 'Add Failed');
+                alert('Failed to add transaction. Please try again.');
+            } finally {
+                document.getElementById('addBtn').disabled = false;
+            }
         }
 
-        function deleteTransaction(id) {
-            if (confirm('Are you sure you want to delete this transaction?')) {
-                transactions = transactions.filter(t => t.id !== id);
-                localStorage.setItem('transactions', JSON.stringify(transactions));
-                updateDashboard();
-                renderTransactions();
+        async function deleteTransaction(id) {
+            if (!confirm('Are you sure you want to delete this transaction?')) return;
+
+            try {
+                updateSyncStatus('syncing', 'Deleting...');
+
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'deleteTransaction',
+                        id: id
+                    })
+                });
+
+                await response.json();
+                await loadData();
+                updateSyncStatus('', 'Synced');
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                updateSyncStatus('error', 'Delete Failed');
+                alert('Failed to delete transaction. Please try again.');
             }
         }
 
         function updateDashboard() {
-            const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+            const total = transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
             const target = targetData.annualTarget || 0;
             const percentage = target > 0 ? Math.min((total / target) * 100, 100) : 0;
             const remaining = Math.max(target - total, 0);
@@ -600,19 +882,16 @@
             document.getElementById('currentTotal').textContent = currencySymbol + total.toLocaleString();
             document.getElementById('remaining').textContent = currencySymbol + remaining.toLocaleString();
 
-            // Update quarterly breakdown
             updateQuarters();
         }
 
         function startCountdown() {
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-            }
+            if (countdownInterval) clearInterval(countdownInterval);
 
             countdownInterval = setInterval(() => {
                 if (targetData.deadline) {
                     const deadline = new Date(targetData.deadline);
-                    deadline.setHours(23, 59, 59, 999); // End of day
+                    deadline.setHours(23, 59, 59, 999);
                     const now = new Date();
                     const diff = deadline - now;
 
@@ -660,7 +939,7 @@
                     return tDate >= q.start && tDate <= q.end;
                 });
 
-                const quarterTotal = quarterTransactions.reduce((sum, t) => sum + t.amount, 0);
+                const quarterTotal = quarterTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
                 const quarterAvg = quarterTransactions.length > 0 ? quarterTotal / quarterTransactions.length : 0;
                 const percentage = quarterTarget > 0 ? Math.min((quarterTotal / quarterTarget) * 100, 100) : 0;
 
@@ -700,7 +979,7 @@
                     <tr>
                         <td>${new Date(t.date).toLocaleDateString()}</td>
                         <td>${t.name}</td>
-                        <td>${currencySymbol}${t.amount.toLocaleString()}</td>
+                        <td>${currencySymbol}${parseFloat(t.amount).toLocaleString()}</td>
                         <td><button class="btn-delete" onclick="deleteTransaction(${t.id})">Delete</button></td>
                     </tr>
                 `).join('');
@@ -731,6 +1010,11 @@
             a.download = `commission-tracker-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
         }
+
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            if (webAppUrl) loadData();
+        }, 30000);
     </script>
 </body>
 </html>
